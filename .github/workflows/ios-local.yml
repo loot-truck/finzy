@@ -35,5 +35,8 @@ jobs:
           ")
           echo "id=$DEVICE_ID" >> "$GITHUB_OUTPUT"
 
-      - name: Build and install on device
+      - name: Build
+        run: flutter build ios --release
+
+      - name: Install on device
         run: flutter install -d "${{ steps.device.outputs.id }}" --release
