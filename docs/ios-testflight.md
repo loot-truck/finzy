@@ -18,7 +18,7 @@ workflow and install the build via the TestFlight app.
    [Apple Developer portal](https://developer.apple.com/account/resources/identifiers/list) →
    Identifiers → "+". Use a bundle ID matching the app —
    `mobile/flutter_app/ios/Runner.xcodeproj/project.pbxproj` currently uses
-   `com.financetracker.flutterApp` (check/update
+   `com.vamshinaik2020.financetracker` (check/update
    `PRODUCT_BUNDLE_IDENTIFIER` there if you want a different one before
    registering).
 
