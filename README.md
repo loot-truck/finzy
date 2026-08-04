@@ -111,3 +111,11 @@ The scaffold runs end to end, but these are deliberately placeholders:
 
 Set `JWT_SECRET` in `.env`, change the PostgreSQL password, and put TLS
 certificates in front of Nginx.
+
+## Deploying and device testing
+
+- [`docs/raspberry-pi.md`](docs/raspberry-pi.md) — OS image, Docker setup,
+  and running the full stack on a Raspberry Pi.
+- [`docs/ios-testflight.md`](docs/ios-testflight.md) — CI pipeline that
+  builds, signs, and uploads the Flutter app to TestFlight so it can be
+  tested on a physical iPhone without a local Xcode install.

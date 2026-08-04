@@ -1,0 +1,2 @@
+app_identifier("com.financetracker.flutterApp")
+team_id(ENV["APPLE_TEAM_ID"]) # from developer.apple.com/account, Membership page

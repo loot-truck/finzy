@@ -47,3 +47,12 @@ docker-compose.override.yml
 # Logs and local scratch
 *.log
 .tmp/
+
+# Fastlane
+mobile/flutter_app/ios/fastlane/report.xml
+mobile/flutter_app/ios/fastlane/Preview.html
+mobile/flutter_app/ios/fastlane/screenshots/
+mobile/flutter_app/ios/fastlane/test_output/
+**/*.mobileprovision
+**/*.cer
+**/*.p12
