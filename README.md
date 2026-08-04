@@ -122,3 +122,7 @@ certificates in front of Nginx.
 - [`docs/ios-self-hosted-runner.md`](docs/ios-self-hosted-runner.md) — free
   alternative: a self-hosted GitHub Actions runner on your own Mac installs
   straight to a connected iPhone, no Apple Developer Program required.
+- [`docs/android-firebase-distribution.md`](docs/android-firebase-distribution.md)
+  — CI pipeline that builds a signed release APK and uploads it to Firebase
+  App Distribution, so testers install/update on their own Android devices
+  with no cable, no paid account, and no dependency on your machine.
