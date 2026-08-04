@@ -1,0 +1,140 @@
+# Full stack for local development and for the Raspberry Pi deployment.
+# Only Nginx publishes a port; everything else talks over the internal network.
+
+x-go-build: &go-build
+  context: .
+  dockerfile: infra/docker/go.Dockerfile
+
+x-rust-build: &rust-build
+  context: .
+  dockerfile: infra/docker/rust.Dockerfile
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  networks: [backend]
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    <<: *service-defaults
+    ports:
+      - "8080:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - gateway
+
+  gateway:
+    build:
+      <<: *go-build
+      args:
+        SERVICE: gateway-go
+    <<: *service-defaults
+    environment:
+      AUTH_URL: http://auth:8081
+      USERS_URL: http://users:8082
+      NOTIFICATIONS_URL: http://notifications:8083
+      MEDIA_URL: http://media:9091
+      AI_URL: http://ai:9092
+      CRYPTO_URL: http://crypto:9093
+    depends_on: [auth, users, notifications, media, ai, crypto]
+
+  auth:
+    build:
+      <<: *go-build
+      args:
+        SERVICE: auth-go
+    <<: *service-defaults
+    environment:
+      # Override in .env before exposing this beyond your LAN.
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      DATABASE_URL: postgres://app:app@postgres:5432/app?sslmode=disable
+    depends_on: [postgres, redis]
+
+  users:
+    build:
+      <<: *go-build
+      args:
+        SERVICE: users-go
+    <<: *service-defaults
+    environment:
+      DATABASE_URL: postgres://app:app@postgres:5432/app?sslmode=disable
+    depends_on: [postgres]
+
+  notifications:
+    build:
+      <<: *go-build
+      args:
+        SERVICE: notifications-go
+    <<: *service-defaults
+    depends_on: [redis]
+
+  media:
+    build:
+      <<: *rust-build
+      args:
+        SERVICE: media-service
+    <<: *service-defaults
+
+  ai:
+    build:
+      <<: *rust-build
+      args:
+        SERVICE: ai-service
+    <<: *service-defaults
+
+  crypto:
+    build:
+      <<: *rust-build
+      args:
+        SERVICE: crypto-service
+    <<: *service-defaults
+
+  postgres:
+    image: postgres:16-alpine
+    <<: *service-defaults
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    <<: *service-defaults
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "no"]
+    volumes:
+      - redisdata:/data
+
+  prometheus:
+    image: prom/prometheus:latest
+    <<: *service-defaults
+    volumes:
+      - ./infra/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    profiles: [monitoring]
+
+  grafana:
+    image: grafana/grafana:latest
+    <<: *service-defaults
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafanadata:/var/lib/grafana
+    profiles: [monitoring]
+
+networks:
+  backend:
+
+volumes:
+  pgdata:
+  redisdata:
+  grafanadata:

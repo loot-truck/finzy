@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # The services currently expose /healthz only. Add a /metrics handler
+  # (prometheus/client_golang, or a text exposition endpoint in Rust) and
+  # point metrics_path at it.
+  - job_name: services
+    metrics_path: /healthz
+    static_configs:
+      - targets:
+          - gateway:8080
+          - auth:8081
+          - users:8082
+          - notifications:8083
+          - media:9091
+          - ai:9092
+          - crypto:9093

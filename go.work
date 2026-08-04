@@ -1,0 +1,9 @@
+go 1.23
+
+use (
+	./shared/go
+	./services/gateway-go
+	./services/auth-go
+	./services/users-go
+	./services/notifications-go
+)

@@ -1,0 +1,8 @@
+[workspace]
+resolver = "2"
+members = [
+    "shared/rust/httpmini",
+    "services/media-rust",
+    "services/ai-rust",
+    "services/crypto-rust",
+]
