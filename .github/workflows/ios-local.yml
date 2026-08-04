@@ -36,6 +36,8 @@ jobs:
           echo "id=$DEVICE_ID" >> "$GITHUB_OUTPUT"
 
       - name: Build
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: flutter build ios --release
 
       - name: Install on device

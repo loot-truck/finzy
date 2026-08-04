@@ -19,6 +19,25 @@ drives your local Xcode installation directly.
   provisioning profile the workflow will reuse.
 - Flutter on `PATH` for whichever user account runs the runner service.
 
+## Pinning which Apple account signs the build
+
+If more than one Apple ID is signed into Xcode on this Mac (e.g. a work
+account and a personal one), automatic signing can silently pick the wrong
+one in CI — Xcode's GUI team selection lives only in local state, and a
+fresh `git checkout` on every workflow run doesn't carry it over.
+
+`mobile/flutter_app/ios/Flutter/Debug.xcconfig` and `Release.xcconfig` pin
+this explicitly:
+```
+DEVELOPMENT_TEAM = $(APPLE_TEAM_ID)
+```
+`APPLE_TEAM_ID` is read from the environment at build time, so it has to be
+set as a GitHub Actions secret (Settings → Secrets and variables → Actions
+→ `APPLE_TEAM_ID`). Find your team ID in Xcode → Settings → Accounts →
+select the correct Apple ID → the team listed underneath shows a
+10-character ID (e.g. `3JN227C5Z5`). `.github/workflows/ios-local.yml`
+already wires this secret into the build step's environment.
+
 ## 1. Register the runner
 
 GitHub repo → Settings → Actions → Runners → "New self-hosted runner" →
