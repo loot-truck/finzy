@@ -1,0 +1,36 @@
+name: iOS Local Device Install
+
+# Runs on a self-hosted macOS runner with a physically-connected iPhone.
+# Builds with local Xcode signing (free Personal Team or paid account,
+# whichever is configured in that Mac's Keychain) and installs straight
+# onto the device — no TestFlight, no Apple Developer Program required.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  install:
+    runs-on: [self-hosted, macOS]
+    defaults:
+      run:
+        working-directory: mobile/flutter_app
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: flutter pub get
+
+      - name: Find connected iPhone
+        id: device
+        run: |
+          DEVICE_ID=$(flutter devices --machine | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)
+          matches = [d for d in devices if d.get('platformType') == 'ios' and d.get('type') == 'device']
+          if not matches:
+              sys.exit('No physically-connected iPhone found. Plug it in, unlock it, and accept the Trust prompt.')
+          print(matches[0]['id'])
+          ")
+          echo "id=$DEVICE_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Build and install on device
+        run: flutter install -d "${{ steps.device.outputs.id }}" --release

@@ -119,3 +119,6 @@ certificates in front of Nginx.
 - [`docs/ios-testflight.md`](docs/ios-testflight.md) — CI pipeline that
   builds, signs, and uploads the Flutter app to TestFlight so it can be
   tested on a physical iPhone without a local Xcode install.
+- [`docs/ios-self-hosted-runner.md`](docs/ios-self-hosted-runner.md) — free
+  alternative: a self-hosted GitHub Actions runner on your own Mac installs
+  straight to a connected iPhone, no Apple Developer Program required.
