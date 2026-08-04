@@ -32,11 +32,19 @@ this explicitly:
 DEVELOPMENT_TEAM = $(APPLE_TEAM_ID)
 ```
 `APPLE_TEAM_ID` is read from the environment at build time, so it has to be
-set as a GitHub Actions secret (Settings → Secrets and variables → Actions
-→ `APPLE_TEAM_ID`). Find your team ID in Xcode → Settings → Accounts →
-select the correct Apple ID → the team listed underneath shows a
-10-character ID (e.g. `3JN227C5Z5`). `.github/workflows/ios-local.yml`
-already wires this secret into the build step's environment.
+set as a GitHub Actions **variable** — not a secret — under Settings →
+Secrets and variables → Actions → **Variables** tab → New repository
+variable → name `APPLE_TEAM_ID`. A team ID isn't sensitive, and using a
+variable instead of a secret means its value shows up in plain text in
+workflow logs instead of being redacted as `***`, which makes it much
+easier to spot a typo or stray whitespace if signing fails.
+
+Find your team ID in Xcode → Settings → Accounts → select the correct
+Apple ID → the team listed underneath shows a 10-character ID (e.g.
+`3JN227C5Z5`), or run `security find-identity -v -p codesigning` in
+Terminal and read the ID in parentheses next to the matching account.
+`.github/workflows/ios-local.yml` already wires this variable into the
+build step's environment.
 
 ## 1. Register the runner
 
