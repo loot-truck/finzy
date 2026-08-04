@@ -56,3 +56,4 @@ mobile/flutter_app/ios/fastlane/test_output/
 **/*.mobileprovision
 **/*.cer
 **/*.p12
+gitrunner
