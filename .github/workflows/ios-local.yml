@@ -10,7 +10,7 @@ on:
 
 jobs:
   install:
-    runs-on: [self-hosted, macOS]
+    runs-on: [self-hosted, macOS, X64]
     defaults:
       run:
         working-directory: mobile/flutter_app

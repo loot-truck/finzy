@@ -22,17 +22,19 @@ drives your local Xcode installation directly.
 ## 1. Register the runner
 
 GitHub repo → Settings → Actions → Runners → "New self-hosted runner" →
-macOS / ARM64. It gives you a one-time token and commands like:
+macOS (pick the architecture matching your Mac — Intel is X64, Apple
+Silicon is ARM64). It gives you a one-time token and commands like:
 
 ```bash
 mkdir -p ~/actions-runner && cd ~/actions-runner
-curl -o actions-runner-osx-arm64.tar.gz -L <url from the GitHub page>
-tar xzf actions-runner-osx-arm64.tar.gz
+curl -o actions-runner-osx-x64.tar.gz -L <url from the GitHub page>
+tar xzf actions-runner-osx-x64.tar.gz
 ./config.sh --url https://github.com/loot-truck/finzy --token <TOKEN>
 ```
-Give it the label `macos-local` (matches `.github/workflows/ios-local.yml`'s
-`runs-on: [self-hosted, macOS]` — the default `macOS` label is applied
-automatically; no extra label config is required unless you rename it).
+GitHub auto-applies the `self-hosted`, `macOS`, and architecture (`X64` or
+`ARM64`) labels based on the machine — these match
+`.github/workflows/ios-local.yml`'s `runs-on: [self-hosted, macOS, X64]`.
+No extra label configuration is needed unless you add custom labels.
 
 ## 2. Run the runner
 
