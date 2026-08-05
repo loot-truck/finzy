@@ -5,6 +5,57 @@ import 'package:flutter/material.dart';
 import '../theme/clay_theme.dart';
 import 'clay_surface.dart';
 
+/// Drives a press animation from raw pointer events instead of
+/// [GestureDetector]'s tap recognizer.
+///
+/// `GestureDetector.onTapDown` has to win a gesture arena before it fires —
+/// inside a scrolling list it is competing with the `ListView`'s drag
+/// recognizer, so rapid, successive presses can get eaten: a tap that moves
+/// even a pixel is read as the start of a scroll and cancelled before
+/// `onTapDown` ever arrives. [Listener] receives the down/up/cancel events
+/// immediately, with no arena and no waiting, so every press animates and a
+/// tap only fires `onTap` if the pointer was released over the widget.
+class _PressDetector extends StatelessWidget {
+  const _PressDetector({
+    required this.onDown,
+    required this.onUp,
+    required this.onCancel,
+    required this.onTap,
+    required this.child,
+  });
+
+  final VoidCallback onDown;
+  final VoidCallback onUp;
+  final VoidCallback onCancel;
+  final VoidCallback? onTap;
+  final Widget child;
+
+  bool _hitTest(BuildContext context, Offset globalPosition) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.attached) return false;
+    return box.paintBounds.contains(box.globalToLocal(globalPosition));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (onTap == null) return child;
+    return Listener(
+      behavior: HitTestBehavior.opaque,
+      onPointerDown: (_) => onDown(),
+      onPointerUp: (event) {
+        if (_hitTest(context, event.position)) {
+          onUp();
+          onTap!();
+        } else {
+          onCancel();
+        }
+      },
+      onPointerCancel: (_) => onCancel(),
+      child: child,
+    );
+  }
+}
+
 /// A pop-it bubble: a matte silicone dome seated in a socket cut into the
 /// surface.
 ///
@@ -13,9 +64,10 @@ import 'clay_surface.dart';
 ///  * **resting** — the dome is convex. A 45° light-to-dark ramp across the
 ///    face, rim light from the top-left, and a 2px contact shadow. It sits
 ///    *in* the surface; it never casts onto the background, so it never floats.
-///  * **pressed** — the dome drops into the socket and takes on the recessed
-///    recipe from Style D: contact shadow gone, ramp reversed, rim lighting
-///    flipped so the dark edge is now top-left.
+///  * **pressed** — the dome sinks straight into the socket along its own
+///    depth axis (a centred scale-down, no lateral shift) and takes on the
+///    recessed recipe from Style D: contact shadow gone, ramp reversed, rim
+///    lighting flipped so the dark edge is now top-left.
 ///
 /// Because both states are the same three shadows with different values, the
 /// press is a straight interpolation rather than a swap.
@@ -83,20 +135,15 @@ class _PopItState extends State<PopIt> with SingleTickerProviderStateMixin {
     super.dispose();
   }
 
-  void _down(_) => _c.forward();
-  void _up(_) => _c.reverse();
-  void _cancel() => _c.reverse();
-
   @override
   Widget build(BuildContext context) {
     final w = widget.width ?? widget.size;
     final h = widget.height ?? widget.size;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: widget.onTap == null ? null : _down,
-      onTapUp: widget.onTap == null ? null : _up,
-      onTapCancel: widget.onTap == null ? null : _cancel,
+    return _PressDetector(
+      onDown: () => _c.forward(),
+      onUp: () => _c.reverse(),
+      onCancel: () => _c.reverse(),
       onTap: widget.onTap,
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -204,28 +251,27 @@ class _PopItState extends State<PopIt> with SingleTickerProviderStateMixin {
       t,
     );
 
-    return Transform.translate(
-      // The dome settles down and to the right as it enters the socket.
-      offset: Offset(ui.lerpDouble(0, 0.5, t)!, ui.lerpDouble(0, 1.5, t)!),
-      child: Transform.scale(
-        scale: ui.lerpDouble(1.0, 0.965, t)!,
-        child: ClaySurface(
-          radius: radius,
-          gradient: gradient,
-          innerShadows: [rimLight, rimShade],
-          shadows: [
-            BoxShadow(
-              // Contact shadow only — and it fades to nothing when pressed,
-              // because a dome sunk into its socket touches all the way round.
-              color: widget.tone.shadow
-                  .withValues(alpha: ui.lerpDouble(0.32, 0.0, t)!),
-              offset: Offset(0, ui.lerpDouble(2, 0, t)!),
-              blurRadius: ui.lerpDouble(4, 0, t)!,
-            ),
-          ],
-          padding: widget.padding,
-          child: Center(child: widget.child),
-        ),
+    return Transform.scale(
+      // Centred scale only — no lateral shift. The dome sinks straight down
+      // its own depth axis, which reads as going *into* the screen. A
+      // diagonal translate instead reads as sliding toward one edge.
+      scale: ui.lerpDouble(1.0, 0.9, t)!,
+      child: ClaySurface(
+        radius: radius,
+        gradient: gradient,
+        innerShadows: [rimLight, rimShade],
+        shadows: [
+          BoxShadow(
+            // Contact shadow only — and it fades to nothing when pressed,
+            // because a dome sunk into its socket touches all the way round.
+            color: widget.tone.shadow
+                .withValues(alpha: ui.lerpDouble(0.32, 0.0, t)!),
+            offset: Offset(0, ui.lerpDouble(2, 0, t)!),
+            blurRadius: ui.lerpDouble(4, 0, t)!,
+          ),
+        ],
+        padding: widget.padding,
+        child: Center(child: widget.child),
       ),
     );
   }
@@ -269,11 +315,10 @@ class _PressableRecessState extends State<PressableRecess>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: widget.onTap == null ? null : (_) => _c.forward(),
-      onTapUp: widget.onTap == null ? null : (_) => _c.reverse(),
-      onTapCancel: widget.onTap == null ? null : () => _c.reverse(),
+    return _PressDetector(
+      onDown: () => _c.forward(),
+      onUp: () => _c.reverse(),
+      onCancel: () => _c.reverse(),
       onTap: widget.onTap,
       child: AnimatedBuilder(
         animation: _c,
